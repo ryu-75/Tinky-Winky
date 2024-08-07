@@ -1,6 +1,6 @@
 #include "../tinky.h"
 
-SERVICE_STATUS			gSvcStatus;
+SERVICE_STATUS			gSvcStatus = { 0 };
 SERVICE_STATUS_HANDLE	gSvcStatusHandle;
 HANDLE					ghSvcStopEvent = NULL;
 
@@ -17,9 +17,9 @@ DWORD	ret = 0;
 int	_tmain(int argc, char* argv[]) 
 {
 	if (argc >= 2 && (std::strcmp(argv[1], "install") && 
-						std::strcmp(argv[1], "start") &&
-							std::strcmp(argv[1], "stop") &&
-								std::strcmp(argv[1], "delete")))
+					  std::strcmp(argv[1], "start") &&
+					  std::strcmp(argv[1], "stop") &&
+					  std::strcmp(argv[1], "delete")))
 	{
 		printf("Usage: %s <command>\nCommands:\n\tinstall\n\tstart\n\tstop\n\tdelete\n", (std::strrchr(argv[0], '\\')) + 1);
 		return 1;
@@ -27,14 +27,14 @@ int	_tmain(int argc, char* argv[])
 	else if (argc <= 1) 
 	{
 		// Execute main service
-		SERVICE_TABLE_ENTRYW	serviceTableEntry[] =
+		SERVICE_TABLE_ENTRYA	serviceTableEntry[] =
 		{
-			{(LPWSTR)SVCNAME, (LPSERVICE_MAIN_FUNCTIONW) svcMain},
+			{SVCNAME, (LPSERVICE_MAIN_FUNCTION) svcMain},
 			{NULL, NULL}
 		};
 
-		if (!StartServiceCtrlDispatcherW(serviceTableEntry)) {
-			printf("SSCD failed (%lu)\n", GetLastError());
+		if (!StartServiceCtrlDispatcherA(serviceTableEntry)) {
+			printf("%d: Service controller connection failed\n", GetLastError());
 			return 1;
 		}
 	}
@@ -55,26 +55,33 @@ int	_tmain(int argc, char* argv[])
 		return 1;
 	} else 
 	{
-		SC_HANDLE	schService;
 		TCHAR	fullPath[MAX_PATH];
 		TCHAR	path[MAX_PATH];
-
+		
 		if (!GetModuleFileName(NULL, fullPath, MAX_PATH))
 		{
-			printf("Cannot install service (%d)\n", GetLastError());
+			printf("%d: Cannot install the service\n", GetLastError());
 			return 1;
 		}
 
 		StringCbPrintf(path, MAX_PATH, TEXT("\"%s\""), fullPath);
 
-		if (std::strcmp(argv[1], "install") == 0)
+		if (!std::strcmp(argv[1], "install"))
 		{
-			/*
-				If command-line parameter is "install", install the service.
-				Otherwise, the service is probably being started by the SCM.
-			*/
-			SvcInstall(schSCManager, path);
-			//createProcess(argv[1]);
+			ret = SvcInstall(schSCManager, path);
+			printf("ret install: %d\n", ret);
+			return 0;
+		}
+		if (!std::strcmp(argv[1], "start"))
+		{
+			ret = SvcStart(schSCManager, path);
+			printf("ret start: %d\n", ret);
+			return 0;
+		}
+		if (!std::strcmp(argv[1], "stop"))
+		{
+			ret = SvcStop(schSCManager);
+			printf("ret start: %d\n", ret);
 			return 0;
 		}
 	}
