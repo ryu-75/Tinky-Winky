@@ -8,13 +8,13 @@ CL_FLAGS		= /EHsc /Wall /WX
 SRCS			= source/tinky.cpp \
 					source/process.cpp \
 					source/command.cpp\
-					source/utils.cpp
+					source/service.cpp
 			
 # Object files
 OBJS			=	source/tinky.obj \
 					source/process.obj \
 					source/command.obj \
-					source/utils.obj
+					source/service.obj
 
 LIBS = Advapi32.lib
 
@@ -27,8 +27,8 @@ source/command.obj: source/command.cpp
 source/process.obj: source/process.cpp
 			$(CL) $(CLFLAGS) /c source/process.cpp /Fo$@
 
-source/utils.obj: source/utils.cpp
-			$(CL) $(CLFLAGS) /c source/utils.cpp /Fo$@
+source/service.obj: source/service.cpp
+			$(CL) $(CLFLAGS) /c source/service.cpp /Fo$@
 # Exec name
 TARGET			= svc.exe
 
@@ -42,7 +42,7 @@ clean			:
 					@if exist .\\source\\tinky.obj del .\\source\\tinky.obj
 					@if exist .\\source\\command.obj del .\\source\\command.obj
 					@if exist .\\source\\process.obj del .\\source\\process.obj
-					@if exist .\\source\\utils.obj del .\\source\\utils.obj
+					@if exist .\\source\\service.obj del .\\source\\service.obj
 
 
 re				: clean all
