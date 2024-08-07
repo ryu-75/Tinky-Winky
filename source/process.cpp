@@ -1,25 +1,55 @@
 #include "../tinky.h"
 
-void	findProcessById(TCHAR svcName)
+DWORD	findProcessById(const char* svcName)
 {
 	HANDLE	hSnapshot;
 	PROCESSENTRY32	processEntry;
 	BOOL	hResult;
+	DWORD	pid;
 
 	// snapshot of all processes in the system
 	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (INVALID_HANDLE_VALUE == hSnapshot) 
-		return;
+	if (INVALID_HANDLE_VALUE == hSnapshot)
+		return 1;
 
 	// initializing size: needed for using Process32First
 	processEntry.dwSize = sizeof(PROCESSENTRY32);
+	hResult = Process32First(hSnapshot, &processEntry);
 
-	// info about first process encountered in a system snapshot
-	hResult = sizeof(PROCESSENTRY32);
-
-	// infor about first process encoutered in a system snapshot
+	if (!hResult) 
+	{
+		printf("Process32First failed (%d)\n", GetLastError());
+		CloseHandle(hSnapshot);
+		return 1;
+	}
+	// retrieve information about the processes
+	// and exit if unsuccessful
+	do {
+		// if we find the process: return process ID
+		if (!std::strcmp(svcName, processEntry.szExeFile))
+		{
+			pid = processEntry.th32ProcessID;
+			break;
+		}
+	} while (Process32Next(hSnapshot, &processEntry));
+	CloseHandle(hSnapshot);
+	return (pid);
 }
 
+void	killProcessById(DWORD pid) {
+	HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+
+	if (hProcess == NULL)
+	{
+		printf("OpenProcess failed (%d)\n", GetLastError());
+		return;
+	}
+	if (!TerminateProcess(hProcess, 1))
+		printf("TerminateProcess failed (%d)\n", GetLastError());
+	CloseHandle(hProcess);
+}
+
+//Not sure with this yet
 void	createProcess(const char* arg)
 {
 	STARTUPINFO	si;
@@ -52,62 +82,4 @@ void	createProcess(const char* arg)
 	// Close process and thread handles
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
-}
-
-VOID WINAPI	svcCtrlHandler(DWORD dwCtrl)
-{
-	switch (dwCtrl)
-	{
-	case SERVICE_CONTROL_STOP:
-		// Add reportServiceStatus
-		printf("HEY\n");
-		return;
-	}
-}
-
-VOID WINAPI	svcMain(DWORD argc, LPTSTR* argv) {
-	// Register the handler function for the service
-
-	SERVICE_STATUS_HANDLE	gSvcStatusHandle = RegisterServiceCtrlHandler(
-		SVCNAME,
-		NULL
-	);
-
-	if (!gSvcStatusHandle)
-	{
-		printf("Service Status Handle failed (%d)\n", GetLastError());
-		return;
-	}
-
-	gSvcStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-	gSvcStatus.dwServiceSpecificExitCode = 0;
-
-	svcInit(argc, argv);
-}
-
-VOID	svcInit(DWORD argc, LPTSTR* argv) {
-	HANDLE	ghSvcStopEvent;
-	
-	ghSvcStopEvent = CreateEvent(
-		NULL,	// default security attributes
-		TRUE,	// manual reset event
-		FALSE,	// not signaled
-		NULL	// no name
-	);
-
-	if (!ghSvcStopEvent)
-	{
-		// reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0);
-		return;
-	}
-
-	// ReportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0);
-
-	while (1)
-	{
-		// Check whether to stop the service
-		WaitForSingleObject(ghSvcStopEvent, INFINITE);
-		// reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0);
-		return;
-	}
 }
