@@ -1,4 +1,4 @@
-#include "../tinky.h"
+#include "../ticky.h"
 
 DWORD	findProcessById(const char* svcName)
 {
