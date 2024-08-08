@@ -1,11 +1,36 @@
-#include "../tinky.h"
+#include "../ticky.h"
 
 VOID	writeLogsToFile(const std::wstring& logMessage)
 {
 	OutputDebugStringW(logMessage.c_str());
 }
 
-VOID	WINAPI svcCtrlHandler(DWORD dwCtrl)
+void	LogEvent(const TCHAR* source, DWORD dwEventID, WORD wType, const char* pMessage)
+{
+	HANDLE	hEventLog = RegisterEventSource(NULL, SVCNAME);
+	if (hEventLog)
+	{
+		LPCTSTR messages[] = { pMessage };
+		ReportEvent(
+			hEventLog, 
+			wType,
+			0,
+			dwEventID, 
+			NULL, 
+			1, 
+			0, 
+			messages, 
+			NULL
+		);
+		DeregisterEventSource(hEventLog);
+	}
+	else
+	{
+		printf("Failed to regiser event source (%d)\n", GetLastError());
+	}
+}
+
+VOID	WINAPI SvcCtrlHandler(DWORD dwCtrl)
 {
 	switch (dwCtrl)
 	{
@@ -25,17 +50,18 @@ VOID	WINAPI svcCtrlHandler(DWORD dwCtrl)
 	SetServiceStatus(gSvcStatusHandle, &gSvcStatus);
 }
 
-VOID	WINAPI svcMain(DWORD argc, LPTSTR* argv) {
+VOID	WINAPI SvcMain(DWORD argc, LPTSTR* argv) {
 	// Register the handler function for the service
-	printf("Service is starting...");
 	gSvcStatusHandle = RegisterServiceCtrlHandler(
 		SVCNAME,
-		svcCtrlHandler
+		SvcCtrlHandler
 	);
 
 	if (!gSvcStatusHandle)
 	{
+		ReportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0);
 		printf("Service Status Handle failed (%d)\n", GetLastError());
+		LogEvent(SVCNAME, SVC_STARTED_ERROR, EVENTLOG_INFORMATION_TYPE, TEXT("Error: Service Status Handle failed"));
 		return ;
 	}
 
@@ -46,14 +72,16 @@ VOID	WINAPI svcMain(DWORD argc, LPTSTR* argv) {
 	gSvcStatus.dwCurrentState = SERVICE_START_PENDING;
 	gSvcStatus.dwWin32ExitCode = NO_ERROR;
 	gSvcStatus.dwCheckPoint = 0;
-	gSvcStatus.dwWaitHint = 3000;
+	gSvcStatus.dwWaitHint = 5000;
 	
 	if (!SetServiceStatus(gSvcStatusHandle, &gSvcStatus))
 	{
+		ReportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0);
 		printf("SetService failed\n");
+		LogEvent(SVCNAME, SVC_STARTED_ERROR, EVENTLOG_INFORMATION_TYPE, TEXT("Error: SetService failed"));
 		return ;
 ;	}
-	
+
 	ghSvcStopEvent = CreateEvent(
 		NULL,	// default security attributes
 		TRUE,	// manual reset event
@@ -64,6 +92,7 @@ VOID	WINAPI svcMain(DWORD argc, LPTSTR* argv) {
 	if (!ghSvcStopEvent)
 	{
 		ReportSvcStatus(SERVICE_STOPPED, GetLastError(), 0);
+		LogEvent(SVCNAME, SVC_STARTED_ERROR, EVENTLOG_INFORMATION_TYPE, TEXT("Error: Stop event service initialization failed"));
 		return ;
 	}
 
@@ -72,6 +101,7 @@ VOID	WINAPI svcMain(DWORD argc, LPTSTR* argv) {
 	WaitForSingleObject(ghSvcStopEvent, INFINITE);
 
 	ReportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0);
+	LogEvent(SVCNAME, SVC_STARTED_SUCCESS, EVENTLOG_INFORMATION_TYPE, TEXT("Success: Ticky service started correctly."));
 	return ;
 }
 
