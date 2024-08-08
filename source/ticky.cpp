@@ -47,7 +47,7 @@ int	_tmain(int argc, char* argv[])
 		SC_MANAGER_ALL_ACCESS	// All access
 	);
 
-	if (schSCManager == NULL) 
+	if (!schSCManager)
 	{
 		ret = GetLastError();
 		if (ret == ERROR_ACCESS_DENIED)
@@ -55,41 +55,43 @@ int	_tmain(int argc, char* argv[])
 		else
 			printf("OpenSCManager failed (%d)\n", GetLastError());
 		return 0;
-	} else 
+	}
+
+	TCHAR	fullPath[MAX_PATH];
+	TCHAR	path[MAX_PATH];
+	
+	if (!GetModuleFileName(NULL, fullPath, MAX_PATH))
 	{
-		TCHAR	fullPath[MAX_PATH];
-		TCHAR	path[MAX_PATH];
-		
-		if (!GetModuleFileName(NULL, fullPath, MAX_PATH))
-		{
-			printf("%d: Cannot install the service\n", GetLastError());
-			return 0;
-		}
+		printf("%d: Cannot install the service\n", GetLastError());
+		return 0;
+	}
 
-		StringCbPrintf(path, MAX_PATH, TEXT("\"%s\""), fullPath);
+	StringCbPrintf(path, MAX_PATH, TEXT("\"%s\""), fullPath);
 
-		if (!std::strcmp(argv[1], "install"))
-		{
-			ret = SvcInstall(schSCManager, path);
-			printf("ret install: %d\n", ret);
-		}
-		if (!std::strcmp(argv[1], "start"))
-		{
-			ret = SvcStart(schSCManager, path);
-			printf("ret start: %d\n", ret);
-		}
-		if (!std::strcmp(argv[1], "stop"))
-		{
-			ret = SvcStop(schSCManager);
-			printf("ret stop: %d\n", ret);
-		}
-
-		if (!ret)
-		{
-			printf("An error occured during the installation (%d)\n", GetLastError());
-			return 0;
-		}
-		return 1;
+	if (!std::strcmp(argv[1], "install"))
+	{
+		SvcInstall(schSCManager, path);
+		printf("ret install: %d\n", ret);
+	}
+	if (!std::strcmp(argv[1], "start"))
+	{
+		ret = SvcStart(schSCManager, path);
+		printf("ret start: %d\n", ret);
+	}
+	if (!std::strcmp(argv[1], "stop"))
+	{
+		ret = SvcStop(schSCManager);
+		printf("ret stop: %d\n", ret);
+	}
+	if (!std::strcmp(argv[1], "delete"))
+	{
+		ret = SvcDelete(schSCManager);
+		printf("ret delete: %d\n", ret);
+	}
+	if (!ret)
+	{
+		printf("An error occured during the installation (%d)\n", GetLastError());
+		return 0;
 	}
 	return 1;
 }

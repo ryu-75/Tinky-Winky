@@ -1,6 +1,6 @@
 #include "../ticky.h"
 
-DWORD	SvcInstall(SC_HANDLE& scm, TCHAR* path)
+void	SvcInstall(SC_HANDLE& scm, TCHAR* path)
 {
 	SC_HANDLE	schService;
 
@@ -25,7 +25,7 @@ DWORD	SvcInstall(SC_HANDLE& scm, TCHAR* path)
 		printf("%d: Service is already installed\n", GetLastError());
 		LogEvent(SVCNAME, SVC_ALREADY_INSTALLED, EVENTLOG_INFORMATION_TYPE, TEXT("Info: The service is already installed."));
 		CLOSESERVICE(scm);
-		return 0;
+		return;
 	}
 
 	printf("Service installed successfully\n");
@@ -33,7 +33,7 @@ DWORD	SvcInstall(SC_HANDLE& scm, TCHAR* path)
 	
 	CLOSESERVICE(schService);
 	CLOSESERVICE(scm);
-	return 1;
+	return;
 }
 
 DWORD	SvcStart(SC_HANDLE scm, char* path) {
@@ -95,12 +95,13 @@ DWORD	SvcStart(SC_HANDLE scm, char* path) {
 	return 1;
 }
 
-// NEED TO BE REVIEW
 DWORD	SvcStop(SC_HANDLE scm)
 {
 	SERVICE_STATUS_PROCESS	ssp = { 0 };
 	SC_HANDLE	schService;
 	DWORD	dwBytesNeeded;
+
+	// Get a handle to the service
 
 	schService = OpenService(
 		scm,
@@ -113,7 +114,6 @@ DWORD	SvcStop(SC_HANDLE scm)
 		printf("%d: The service doesn't exist\n", GetLastError());
 		LogEvent(SVCNAME, SVC_STOPPED_ERROR, EVENTLOG_INFORMATION_TYPE, TEXT("Error: Service is not installed"));
 	}
-
 	if (!QueryServiceStatusEx(schService, SC_STATUS_PROCESS_INFO, (LPBYTE)&ssp, sizeof(SERVICE_STATUS_PROCESS), &dwBytesNeeded))
 	{
 		printf("QueryServiceStatusEx failed (%d)\n", GetLastError());
@@ -130,7 +130,6 @@ DWORD	SvcStop(SC_HANDLE scm)
 		CLOSESERVICE(schService);
 		return 0;
 	}
-
 	if (!ControlService(
 		schService,
 		SERVICE_CONTROL_STOP,
@@ -141,6 +140,8 @@ DWORD	SvcStop(SC_HANDLE scm)
 		CLOSESERVICE(schService);
 		return 0;
 	}
+
+	// Stop the service
 
 	while (ssp.dwCurrentState != SERVICE_STOPPED)
 	{
@@ -155,9 +156,47 @@ DWORD	SvcStop(SC_HANDLE scm)
 		if (ssp.dwCurrentState == SERVICE_STOPPED)
 			break;
 	}
+
 	printf("Service stopped successfully\n");
 	LogEvent(SVCNAME, SVC_STOPPED_SUCCESS, EVENTLOG_INFORMATION_TYPE, TEXT("Success: Service stopped correctly."));
 	return 1;
 }
 
-VOID	WINAPI SvcDelete();
+DWORD	SvcDelete(SC_HANDLE scm)
+{
+	SC_HANDLE	schService;
+	SERVICE_STATUS	ssStatus;
+	DWORD	err = GetLastError();
+
+	// Get a handle to the service
+
+	schService = OpenService(
+		scm,		// SCM database
+		SVCNAME,	// Name of service
+		DELETE		// need a delete access
+	);
+
+	if (!schService)
+	{
+		printf("%d: Service is not installed\n", err);
+		LogEvent(SVCNAME, SVC_DELETED_ERROR, EVENTLOG_INFORMATION_TYPE, TEXT("Error: Service is not installed"));
+		CLOSESERVICE(scm);
+		return 0;
+	}
+
+	// Delete the service
+
+	if (!DeleteService(schService))
+	{
+		printf("%d: Service is already deleted\n", err);
+		LogEvent(SVCNAME, SVC_ALREADY_DELETED, EVENTLOG_INFORMATION_TYPE, TEXT("Info: Service is already deleted"));
+		CLOSESERVICE(scm);
+		CLOSESERVICE(schService);
+		return 0;
+	}
+	printf("Service deleted successfully\n");
+	LogEvent(SVCNAME, SVC_DELETED_SUCCESS, EVENTLOG_INFORMATION_TYPE, TEXT("Success: Service deleted correctly"));
+	CLOSESERVICE(scm);
+	CLOSESERVICE(schService);
+	return 1;
+}

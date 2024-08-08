@@ -27,10 +27,11 @@ extern HANDLE					ghSvcStopEvent;
 extern DWORD					eventId;
 
 // Options
-DWORD	SvcInstall(SC_HANDLE& scm, TCHAR* path);
+void	SvcInstall(SC_HANDLE& scm, TCHAR* path);
 DWORD	SvcStart(SC_HANDLE scm, char* path);
 DWORD	SvcStop(SC_HANDLE scm);
-VOID	writeLogsToFile(const std::wstring& logMessage);
+DWORD	SvcDelete(SC_HANDLE scm);
+
 
 // Process
 void	createProcess(const char* arg);
