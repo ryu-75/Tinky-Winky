@@ -15,12 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ticky.h">
+    <ClInclude Include="tinky.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ticky.cpp">
+    <ClCompile Include="tinky.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="command.cpp">

@@ -19,12 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ticky.h" />
+    <ClInclude Include="tinky.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="command.cpp" />
     <ClCompile Include="process.cpp" />
-    <ClCompile Include="ticky.cpp" />
+    <ClCompile Include="tinky.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -33,7 +33,7 @@
     <ProjectGuid>{fa080368-ff94-4684-b6fb-b44a77c1f616}</ProjectGuid>
     <RootNamespace>FirstWindowsService</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>ticky</ProjectName>
+    <ProjectName>tinky</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
