@@ -10,3 +10,11 @@ source/*.obj
 # Logs
 *.log
 
+# Journal
+sample.dll
+sample.h
+sample.rc
+sample.res
+
+# Other
+*.bin
