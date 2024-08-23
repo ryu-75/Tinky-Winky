@@ -23,7 +23,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="command.cpp" />
-    <ClCompile Include="process.cpp" />
+    <ClCompile Include="manageErrorService.cpp" />
+    <ClCompile Include="processHandle.cpp" />
     <ClCompile Include="tinky.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
